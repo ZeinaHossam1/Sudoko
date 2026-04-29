@@ -1,6 +1,6 @@
 from collections import deque
 
-def ac3(csp, queue=None):
+def ac3(csp, queue=None, show_steps=False):
     # SETUP: If we didn't pass a specific queue, build one containing 
     # EVERY single relationship on the entire board. 
     if queue is None:
@@ -8,20 +8,34 @@ def ac3(csp, queue=None):
     else:
         queue = deque(queue)
 
+    steps = []
+
     # THE ENGINE: Keep running until the line of relationships is empty.
     while queue:
         
         # Grab the first pair of cells out of the queue
         (xi, xj) = queue.popleft() 
         
+        before = csp.domains[xi][:]
+        
         # Send them to the 'revise' function to check for illegal numbers.
         # If 'revise' returns True, it means it deleted a number from xi's domain.
         if revise(csp, xi, xj):
             
+            after = csp.domains[xi][:]
+            
+            if show_steps:
+                print(f"Arc: {xi}->{xj} | Before: {before} | After: {after}") 
+                steps.append({
+                    "arc": (xi, xj),
+                    "before": before,
+                    "after": after
+                })
+            
             # FATAL ERROR CHECK: Did 'revise' delete the LAST possible number in xi?
             # If length is 0, this Sudoku board is impossible to solve. Stop the whole program.
             if len(csp.domains[xi]) == 0:
-                return False 
+                return False, steps 
                 
             # THE PROPAGATION (The Ripple Effect):
             # Because xi's domain just got smaller, any cell touching xi might now
@@ -35,7 +49,8 @@ def ac3(csp, queue=None):
                     
     # If the queue is finally empty, and no domains dropped to 0, 
     # the board is logically sound!
-    return True
+    return True, steps
+
 
 def revise(csp, xi, xj):
     revised = False
