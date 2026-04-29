@@ -1,5 +1,3 @@
-# Sudoko_csp.py
-
 class SudokuCSP:
     def __init__(self, board):
         self.board = [row[:] for row in board]

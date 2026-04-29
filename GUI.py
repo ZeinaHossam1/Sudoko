@@ -43,6 +43,8 @@ class SudokuGUI:
                     pady=(3 if r % 3 == 0 else 1, 3 if r == 8 else 1)
                 )
 
+                entry.bind("<KeyRelease>", lambda event, row=r, col=c: self.check_live_input(event, row, col))
+
                 row_entries.append(entry)
 
             self.entries.append(row_entries)
@@ -107,7 +109,7 @@ class SudokuGUI:
                 if board[r][c] != 0:
                     self.entries[r][c].insert(0, str(board[r][c]))
 
-        self.root.update()  # 🔥 FORCE UI REFRESH
+        self.root.update()  # FORCE UI REFRESH
 
     def solve_puzzle(self):
         board = self.get_board()
@@ -162,6 +164,46 @@ class SudokuGUI:
         self.display_board(puzzle)
 
         self.root.config(cursor="")
+
+    def check_live_input(self, event, row, col):
+
+        # Get the current text box and the value inside it
+        current_entry = self.entries[row][col]
+        value_str = current_entry.get()
+        
+        # 1. Reset the background to white automatically
+        current_entry.config(bg="white")
+        
+        # 2. If they deleted the number, stop checking (empty is valid)
+        if not value_str:
+            return 
+            
+        # 3. If they typed a letter or 0, flag it as invalid
+        if not (value_str.isdigit() and 1 <= int(value_str) <= 9):
+            current_entry.config(bg="#ffcccc") # Light red
+            return
+            
+        # 4. Check the Row for duplicates
+        for c in range(9):
+            if c != col and self.entries[row][c].get() == value_str:
+                current_entry.config(bg="#ffcccc")
+                return
+        
+        # 5. Check the Column for duplicates
+        for r in range(9):
+            if r != row and self.entries[r][col].get() == value_str:
+                current_entry.config(bg="#ffcccc")
+                return
+        
+        # 6. Check the 3x3 Box for duplicates
+        box_row = (row // 3) * 3
+        box_col = (col // 3) * 3
+        for r in range(box_row, box_row + 3):
+            for c in range(box_col, box_col + 3):
+                # Skip the exact cell the user is typing in
+                if (r != row or c != col) and self.entries[r][c].get() == value_str:
+                    current_entry.config(bg="#ffcccc")
+                    return
 
 
 if __name__ == "__main__":
